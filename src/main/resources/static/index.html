@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PremierZone — Player Intelligence</title>
+<style>
+  :root{--ink:#11131a;--muted:#6d717d;--paper:#f4f3ef;--card:#fff;--line:#deddd8;--lime:#d8ff45;--violet:#5d36f2;--coral:#ff6b4a;--shadow:0 18px 55px rgba(22,18,49,.10);--r:22px}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+  button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1440px;margin:auto;padding:0 34px 48px}
+  .topbar{height:86px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:13px;font-weight:850;letter-spacing:-.04em;font-size:22px}.brand-mark{width:38px;height:38px;border-radius:13px;background:var(--ink);display:grid;place-items:center;color:var(--lime);font-size:20px;transform:rotate(-5deg)}
+  .top-actions{display:flex;align-items:center;gap:10px}.status{display:flex;align-items:center;gap:8px;padding:10px 13px;border-radius:99px;background:#fff;border:1px solid var(--line);color:var(--muted);font-size:12px;font-weight:700}.status-dot{width:8px;height:8px;border-radius:50%;background:#aaa}.status.online .status-dot{background:#20b26b;box-shadow:0 0 0 4px #d9f6e7}.status.offline .status-dot{background:var(--coral)}
+  .btn{border:0;border-radius:14px;padding:12px 16px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:.2s}.btn:hover{transform:translateY(-2px)}.btn-primary{background:var(--ink);color:#fff;box-shadow:0 8px 18px rgba(17,19,26,.16)}.btn-primary b{color:var(--lime)}.btn-soft{background:#fff;border:1px solid var(--line);color:var(--ink)}
+  .hero{padding:54px 0 26px;display:grid;grid-template-columns:1.3fr .7fr;gap:44px;align-items:end}.eyebrow{display:flex;align-items:center;gap:10px;text-transform:uppercase;font-size:11px;letter-spacing:.14em;font-weight:850;color:var(--violet)}.eyebrow:before{content:"";width:28px;height:2px;background:var(--violet)}
+  h1{font-size:clamp(50px,7vw,100px);line-height:.88;letter-spacing:-.075em;margin:20px 0 18px;max-width:900px}.highlight{position:relative;display:inline-block;z-index:0}.highlight:after{content:"";position:absolute;z-index:-1;left:-3%;right:-4%;height:29%;bottom:1%;background:var(--lime);transform:rotate(-1.5deg);border-radius:7px}
+  .hero p{max-width:650px;color:var(--muted);font-size:17px;line-height:1.55;margin:0}.hero-note{background:var(--ink);color:#fff;border-radius:var(--r);padding:24px;position:relative;overflow:hidden}.hero-note:after{content:"";position:absolute;width:120px;height:120px;border:30px solid rgba(216,255,69,.18);border-radius:50%;right:-45px;top:-54px}.hero-note-label{color:var(--lime);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em}.hero-note strong{font-size:23px;display:block;line-height:1.1;margin:14px 0 10px}.hero-note p{color:#aaaeb8;font-size:13px}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:14px 0 26px}.metric{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;min-height:118px;position:relative;overflow:hidden}.metric:after{content:"";position:absolute;width:42px;height:42px;border-radius:50%;right:-17px;bottom:-17px;border:10px solid var(--accent,#ddd)}.metric-label{font-size:11px;text-transform:uppercase;letter-spacing:.09em;font-weight:800;color:var(--muted)}.metric-value{font-size:35px;font-weight:900;letter-spacing:-.05em;margin-top:13px}.metric-sub{font-size:11px;color:var(--muted);margin-top:3px}
+  .workspace{background:var(--card);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);overflow:hidden}.toolbar{padding:18px;display:flex;gap:12px;align-items:center;border-bottom:1px solid var(--line);flex-wrap:wrap}.search{position:relative;flex:1;min-width:250px}.search svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:#777}.search input,.filter{width:100%;height:46px;border:1px solid var(--line);border-radius:14px;background:#f8f8f6;color:var(--ink);outline:none}.search input{padding:0 16px 0 43px}.search input:focus,.filter:focus{border-color:var(--violet);box-shadow:0 0 0 3px rgba(93,54,242,.10)}.filter{width:auto;min-width:142px;padding:0 34px 0 13px;font-weight:700;font-size:13px}
+  .view-toggle{display:flex;background:#f0efec;padding:4px;border-radius:12px}.icon-btn{border:0;background:transparent;width:37px;height:37px;border-radius:9px;display:grid;place-items:center;color:#777}.icon-btn.active{background:#fff;color:var(--ink);box-shadow:0 2px 8px #0001}
+  .content-head{padding:20px 22px 13px;display:flex;align-items:end;justify-content:space-between}.content-head h2{margin:0;font-size:22px;letter-spacing:-.04em}.count{font-size:12px;color:var(--muted);margin-top:4px}.sort{border:0;background:transparent;color:var(--muted);font-size:12px;font-weight:700}
+  .table-wrap{overflow:auto}.player-table{width:100%;border-collapse:collapse;min-width:980px}.player-table th{font-size:10px;text-transform:uppercase;letter-spacing:.09em;text-align:left;color:var(--muted);padding:13px 18px;border-bottom:1px solid var(--line)}.player-table td{padding:15px 18px;border-bottom:1px solid #ecebe7;font-size:13px}.player-table tbody tr{transition:.16s}.player-table tbody tr:hover{background:#fafaf7}.player-cell{display:flex;align-items:center;gap:12px;min-width:205px}.avatar{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;font-weight:900;background:var(--lime);color:var(--ink);flex:none}.player-name{font-weight:850}.player-meta{font-size:11px;color:var(--muted);margin-top:3px}.tag{display:inline-flex;padding:6px 9px;border-radius:99px;background:#f0edff;color:var(--violet);font-weight:800;font-size:11px}.num{font-variant-numeric:tabular-nums;font-weight:700}.impact{width:70px}.impact-track{height:5px;background:#e9e8e4;border-radius:9px;overflow:hidden}.impact-track i{display:block;height:100%;background:var(--violet);border-radius:9px}.row-actions{display:flex;gap:4px}.mini{width:32px;height:32px;border:0;border-radius:9px;background:#f4f3ef;color:#555}.mini:hover{background:var(--ink);color:#fff}.mini.danger:hover{background:#fee8e2;color:#c93f20}
+  .cards{display:none;grid-template-columns:repeat(3,1fr);gap:15px;padding:0 20px 24px}.player-card{border:1px solid var(--line);border-radius:18px;padding:17px;background:#fff}.card-top{display:flex;justify-content:space-between}.card-score{font-size:28px;font-weight:900;color:var(--violet)}.card-stats{display:grid;grid-template-columns:repeat(3,1fr);margin-top:18px;border-top:1px solid var(--line);padding-top:14px}.card-stats div{font-size:18px;font-weight:850}.card-stats small{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:3px;letter-spacing:.06em}
+  .empty{padding:65px 24px 75px;text-align:center;display:none}.empty-icon{width:70px;height:70px;border-radius:24px;background:#f0edff;color:var(--violet);display:grid;place-items:center;margin:auto;font-size:30px;transform:rotate(-4deg)}.empty h3{font-size:22px;margin:18px 0 8px}.empty p{max-width:430px;margin:0 auto 20px;color:var(--muted);font-size:14px;line-height:1.5}
+  .footer-note{display:flex;justify-content:space-between;align-items:center;padding:18px 4px;color:var(--muted);font-size:11px}.kbd{border:1px solid var(--line);background:#fff;border-radius:6px;padding:3px 6px;color:#555}
+  .modal-backdrop{position:fixed;inset:0;background:rgba(10,10,16,.62);backdrop-filter:blur(8px);z-index:50;display:none;align-items:center;justify-content:center;padding:20px}.modal-backdrop.open{display:flex}.modal{width:min(720px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:25px;box-shadow:0 30px 80px #0006}.modal-head{padding:24px 26px 18px;display:flex;justify-content:space-between;align-items:start;border-bottom:1px solid var(--line)}.modal-head h3{margin:0;font-size:26px;letter-spacing:-.05em}.modal-head p{margin:5px 0 0;color:var(--muted);font-size:12px}.close{border:0;background:#f1f0ec;width:38px;height:38px;border-radius:12px;font-size:20px}.form{padding:22px 26px 26px}.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.field.span2{grid-column:span 2}.field label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.09em;font-weight:800;color:var(--muted);margin:0 0 7px}.field input,.field select{width:100%;height:44px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:#fbfbf9;outline:none}.field input:focus,.field select:focus{border-color:var(--violet);box-shadow:0 0 0 3px rgba(93,54,242,.09)}.edit-note{display:none;background:#f0edff;color:#5030c9;font-size:12px;border-radius:12px;padding:11px 13px;margin-bottom:16px}.form-error{display:none;background:#fee8e2;color:#8f2715;font-size:12.5px;line-height:1.5;border-radius:12px;padding:11px 13px;margin-bottom:16px}.form-error.show{display:block}.field-error{display:none;color:#c0391f;font-size:11px;font-weight:700;margin-top:5px}.field-error.show{display:block}.field input.invalid,.field select.invalid{border-color:#e05236;box-shadow:0 0 0 3px rgba(224,82,54,.12)}.form-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
+  .toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:14px 17px;border-radius:14px;box-shadow:0 18px 44px #0004;z-index:80;font-size:13px;font-weight:700;transform:translateY(120px);opacity:0;transition:.3s}.toast.show{transform:none;opacity:1}.toast.error{background:#a92f1c}.spinner{width:16px;height:16px;border:2px solid #ffffff55;border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+  @media(max-width:900px){.shell{padding:0 18px 35px}.hero{grid-template-columns:1fr;padding-top:38px}.hero-note{display:none}.metrics{grid-template-columns:repeat(2,1fr)}.cards{grid-template-columns:repeat(2,1fr)}.top-actions .status{display:none}}
+  @media(max-width:620px){.brand span:last-child{display:none}.topbar{height:70px}.hero{padding-top:32px}h1{font-size:56px}.metrics{grid-template-columns:1fr 1fr}.metric{min-height:100px;padding:15px}.metric-value{font-size:27px}.filter{flex:1;min-width:110px}.table-wrap{display:none}.cards.active{display:grid;grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.field.span2{grid-column:auto}.footer-note span:last-child{display:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark">PZ</div><span>PremierZone</span></div>
+    <div class="top-actions">
+      <div class="status offline" id="apiStatus"><span class="status-dot"></span><span id="statusText">Connecting…</span></div>
+      <button class="btn btn-soft" id="refreshBtn" title="Reload players">↻ <span>Refresh</span></button>
+      <button class="btn btn-primary" id="addBtn"><b>＋</b> Add player</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div><div class="eyebrow">Premier League player intelligence</div><h1>Know the game.<br><span class="highlight">Own the data.</span></h1><p>Explore player performance, filter every angle, and keep your roster current—all powered by your PremierZone API.</p></div>
+    <aside class="hero-note"><div class="hero-note-label">API-ready workspace</div><strong>One view.<br>Every player.</strong><p>Connected directly to the Spring Boot player endpoints for live create, edit, and delete actions.</p></aside>
+  </section>
+
+  <section class="metrics" aria-label="Player summary">
+    <div class="metric" style="--accent:var(--lime)"><div class="metric-label">Total players</div><div class="metric-value" id="mPlayers">—</div><div class="metric-sub">in current view</div></div>
+    <div class="metric" style="--accent:var(--violet)"><div class="metric-label">Teams</div><div class="metric-value" id="mTeams">—</div><div class="metric-sub">represented</div></div>
+    <div class="metric" style="--accent:var(--coral)"><div class="metric-label">Goals</div><div class="metric-value" id="mGoals">—</div><div class="metric-sub">combined</div></div>
+    <div class="metric" style="--accent:#20b26b"><div class="metric-label">Avg. age</div><div class="metric-value" id="mAge">—</div><div class="metric-sub">years</div></div>
+  </section>
+
+  <main class="workspace">
+    <div class="toolbar">
+      <div class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="searchInput" placeholder="Search player, team or nation…" autocomplete="off"></div>
+      <select class="filter" id="teamFilter"><option value="">All teams</option></select>
+      <select class="filter" id="posFilter"><option value="">All positions</option></select>
+      <div class="view-toggle"><button class="icon-btn active" id="tableView" title="Table view">☷</button><button class="icon-btn" id="cardView" title="Card view">▦</button></div>
+    </div>
+    <div class="content-head"><div><h2>Player directory</h2><div class="count" id="resultCount">Waiting for your backend…</div></div><select class="sort" id="sortSelect"><option value="name">Sort: Name</option><option value="goals">Goals: high to low</option><option value="minutes">Minutes: high to low</option><option value="age">Age: low to high</option></select></div>
+    <div class="table-wrap" id="tableWrap"><table class="player-table"><thead><tr><th>Player</th><th>Team</th><th>Position</th><th>Age</th><th>MP</th><th>Starts</th><th>Minutes</th><th>G</th><th>A</th><th>Impact</th><th></th></tr></thead><tbody id="playerRows"></tbody></table></div>
+    <div class="cards" id="playerCards"></div>
+    <div class="empty" id="emptyState"><div class="empty-icon">⚽</div><h3 id="emptyTitle">No players yet</h3><p id="emptyText">Start your Spring Boot backend, then refresh. When served from the backend, this dashboard loads real player data from <strong>/api/v2/player/getplayer</strong>.</p><button class="btn btn-primary" id="emptyAction">＋ Add first player</button></div>
+  </main>
+  <div class="footer-note"><span>PremierZone · live roster workspace</span><span><span class="kbd">/</span> search &nbsp; <span class="kbd">N</span> new player</span></div>
+</div>
+
+<div class="modal-backdrop" id="playerModal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-head"><div><h3 id="modalTitle">Add player</h3><p id="modalSub">Create a new PremierZone roster entry.</p></div><button class="close" data-close>×</button></div>
+  <form class="form" id="playerForm"><div class="edit-note" id="editNote">Edits now save every field — team, position, nation, age, matches, minutes, goals, assists, xG and cards. The player name is the record key, so it stays locked while editing.</div>
+    <div class="form-error" id="formError" role="alert"></div>
+    <div class="form-grid">
+      <div class="field span2"><label>Player name *</label><input name="name" required placeholder="e.g. Player name"></div>
+      <div class="field"><label>Age</label><input name="age" type="number" min="15" max="60" placeholder="24"></div>
+      <div class="field"><label>Nation</label><input name="nation" placeholder="Nation"></div>
+      <div class="field"><label>Team</label><input name="team" placeholder="Club"></div>
+      <div class="field"><label>Position</label><select name="pos"><option value="">Select</option><option>FW</option><option>MF</option><option>DF</option><option>GK</option><option>FW,MF</option><option>MF,DF</option></select></div>
+      <div class="field"><label>Matches</label><input name="mp" type="number" min="0" placeholder="0"></div>
+      <div class="field"><label>Starts</label><input name="starts" type="number" min="0" placeholder="0"></div>
+      <div class="field"><label>Minutes</label><input name="min" type="number" min="0" step="0.1" placeholder="0"></div>
+      <div class="field"><label>Goals</label><input name="gls" type="number" min="0" step="0.1" placeholder="0"></div>
+      <div class="field"><label>Assists</label><input name="ast" type="number" min="0" step="0.1" placeholder="0"></div>
+      <div class="field"><label>xG</label><input name="xg" type="number" min="0" step="0.1" placeholder="0"></div>
+      <div class="field"><label>Penalties</label><input name="pk" type="number" min="0" step="0.1" placeholder="0"></div>
+      <div class="field"><label>Yellow cards</label><input name="crdy" type="number" min="0" step="0.1" placeholder="0"></div>
+      <div class="field"><label>Red cards</label><input name="crdr" type="number" min="0" step="0.1" placeholder="0"></div>
+    </div>
+    <div class="form-actions"><button type="button" class="btn btn-soft" data-close>Cancel</button><button type="submit" class="btn btn-primary" id="saveBtn">Save player</button></div>
+  </form>
+</div></div>
+<div class="modal-backdrop" id="deleteModal"><div class="modal" style="max-width:450px"><div class="modal-head"><div><h3>Delete player?</h3><p id="deleteCopy">This cannot be undone.</p></div><button class="close" data-close-delete>×</button></div><div class="form"><div class="form-actions" style="margin-top:0"><button class="btn btn-soft" data-close-delete>Cancel</button><button class="btn" style="background:#c74327;color:white" id="confirmDelete">Delete</button></div></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const API = (()=>{const q=new URLSearchParams(location.search).get('api');if(q)return q.replace(/\/$/,'');if(location.protocol==='file:')return 'http://localhost:8080/api/v2/player';if((location.hostname==='localhost'||location.hostname==='127.0.0.1')&&location.port&&location.port!=='8080')return 'http://localhost:8080/api/v2/player';return '/api/v2/player'})();
+  const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+  let players = [], filtered = [], editing = null, deleting = null, view = 'table';
+  const numeric = ['age','mp','starts','min','gls','ast','pk','crdy','crdr','xg'];
+  const fmt = (v, dash='—') => (v === null || v === undefined || v === '') ? dash : Number(v).toLocaleString(undefined,{maximumFractionDigits:1});
+  const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  const initials = name => (name || '?').split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+  const impact = p => Math.max(0, Math.min(100, Math.round((Number(p.gls)||0)*9 + (Number(p.ast)||0)*7 + Math.min((Number(p.mp)||0)*1.2,36))));
+  function toast(msg, error=false){const t=$('#toast');t.textContent=msg;t.className='toast show'+(error?' error':'');clearTimeout(t._x);t._x=setTimeout(()=>t.className='toast',3200)}
+  function setStatus(ok,label){$('#apiStatus').className='status '+(ok?'online':'offline');$('#statusText').textContent=label}
+  async function request(path='', options={}){
+    const res = await fetch(API+path,{...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});
+    const text=await res.text();let data=null;if(text){try{data=JSON.parse(text)}catch{data=text}}
+    if(!res.ok){const err=new Error((data&&data.message)||(typeof data==='string'&&data)||`Request failed (${res.status})`);err.status=res.status;err.fields=(data&&typeof data==='object')?data.fields||null:null;throw err}
+    return data;
+  }
+  function clearFieldErrors(){$$('#playerForm .field-error').forEach(el=>{el.textContent='';el.classList.remove('show')});$$('#playerForm .invalid').forEach(el=>el.classList.remove('invalid'));const box=$('#formError');box.textContent='';box.classList.remove('show')}
+  function showFieldErrors(err){
+    clearFieldErrors();const box=$('#formError');
+    if(err&&err.fields){Object.entries(err.fields).forEach(([field,msg])=>{const input=$(`#playerForm [name="${field}"]`);if(!input)return;input.classList.add('invalid');let slot=input.closest('.field')?.querySelector('.field-error');if(!slot){slot=document.createElement('div');slot.className='field-error';input.closest('.field').appendChild(slot)}slot.textContent=msg;slot.classList.add('show')});box.textContent=Object.values(err.fields).join(' ');box.classList.add('show');return}
+    box.textContent=(err&&err.message)||'Something went wrong. Please try again.';box.classList.add('show');
+  }
+  async function load(){
+    $('#refreshBtn').innerHTML='<span class="spinner"></span> Loading';
+    try{players=await request('/getplayer');if(!Array.isArray(players))players=[];setStatus(true,'API connected');populateFilters();apply();}
+    catch(e){players=[];setStatus(false,'Backend offline');apply();toast('Could not reach the PremierZone API',true);}
+    finally{$('#refreshBtn').innerHTML='↻ <span>Refresh</span>'}
+  }
+  function populateFilters(){
+    const team=$('#teamFilter').value,pos=$('#posFilter').value;
+    const teams=[...new Set(players.map(p=>p.team ?? p.Team).filter(Boolean))].sort();
+    const positions=[...new Set(players.map(p=>p.pos).filter(Boolean))].sort();
+    $('#teamFilter').innerHTML='<option value="">All teams</option>'+teams.map(x=>`<option ${x===team?'selected':''}>${esc(x)}</option>`).join('');
+    $('#posFilter').innerHTML='<option value="">All positions</option>'+positions.map(x=>`<option ${x===pos?'selected':''}>${esc(x)}</option>`).join('');
+  }
+  function apply(){
+    const q=$('#searchInput').value.trim().toLowerCase(),team=$('#teamFilter').value,pos=$('#posFilter').value,sort=$('#sortSelect').value;
+    filtered=players.filter(p=>{const club=p.team ?? p.Team ?? '';return (!q||[p.name,club,p.nation].some(v=>String(v||'').toLowerCase().includes(q)))&&(!team||club===team)&&(!pos||p.pos===pos)});
+    filtered.sort((a,b)=>sort==='goals'?(b.gls||0)-(a.gls||0):sort==='minutes'?(b.min||0)-(a.min||0):sort==='age'?(a.age||999)-(b.age||999):String(a.name||'').localeCompare(String(b.name||'')));
+    render();
+  }
+  function render(){
+    const has=filtered.length>0,total=players.length;
+    $('#resultCount').textContent=total?`${filtered.length} of ${total} players`:(navigator.onLine?'No roster data loaded':'You appear to be offline');
+    $('#mPlayers').textContent=filtered.length||'0';$('#mTeams').textContent=new Set(filtered.map(p=>p.team??p.Team).filter(Boolean)).size||'0';
+    $('#mGoals').textContent=fmt(filtered.reduce((a,p)=>a+(Number(p.gls)||0),0),'0');
+    const ages=filtered.map(p=>Number(p.age)).filter(Boolean);$('#mAge').textContent=ages.length?(ages.reduce((a,b)=>a+b,0)/ages.length).toFixed(1):'—';
+    $('#playerRows').innerHTML=filtered.map((p,i)=>{const team=p.team??p.Team??'Unassigned',score=impact(p);return `<tr><td><div class="player-cell"><div class="avatar" style="background:${['#d8ff45','#ffd2c8','#d8d0ff','#c9f4e1'][i%4]}">${esc(initials(p.name))}</div><div><div class="player-name">${esc(p.name)}</div><div class="player-meta">${esc(p.nation||'Nation not set')}</div></div></div></td><td><b>${esc(team)}</b></td><td><span class="tag">${esc(p.pos||'—')}</span></td><td class="num">${fmt(p.age)}</td><td class="num">${fmt(p.mp)}</td><td class="num">${fmt(p.starts)}</td><td class="num">${fmt(p.min)}</td><td class="num">${fmt(p.gls)}</td><td class="num">${fmt(p.ast)}</td><td><div class="impact"><div class="impact-track"><i style="width:${score}%"></i></div><div class="player-meta">${score}/100</div></div></td><td><div class="row-actions"><button class="mini" data-edit="${esc(p.name)}" title="Edit">✎</button><button class="mini danger" data-delete="${esc(p.name)}" title="Delete">×</button></div></td></tr>`}).join('');
+    $('#playerCards').innerHTML=filtered.map((p,i)=>`<div class="player-card"><div class="card-top"><div class="player-cell"><div class="avatar" style="background:${['#d8ff45','#ffd2c8','#d8d0ff','#c9f4e1'][i%4]}">${esc(initials(p.name))}</div><div><div class="player-name">${esc(p.name)}</div><div class="player-meta">${esc((p.team??p.Team)||'Unassigned')} · ${esc(p.pos||'—')}</div></div></div><div class="card-score">${impact(p)}</div></div><div class="card-stats"><div>${fmt(p.gls,'0')}<small>Goals</small></div><div>${fmt(p.ast,'0')}<small>Assists</small></div><div>${fmt(p.mp,'0')}<small>Matches</small></div></div><div class="row-actions" style="margin-top:14px;justify-content:flex-end"><button class="mini" data-edit="${esc(p.name)}">✎</button><button class="mini danger" data-delete="${esc(p.name)}">×</button></div></div>`).join('');
+    $('#emptyState').style.display=has?'none':'block';$('#tableWrap').style.display=has&&view==='table'?'block':'none';$('#playerCards').classList.toggle('active',has&&view==='card');
+    if(!has && total){$('#emptyTitle').textContent='No matching players';$('#emptyText').textContent='Try clearing a filter or searching for a different player, team, or nation.';$('#emptyAction').textContent='Clear filters'}else{$('#emptyTitle').textContent='No players yet';$('#emptyText').innerHTML='Start your Spring Boot backend, then refresh. When served from the backend, this dashboard loads real player data from <strong>/api/v2/player/getplayer</strong>.';$('#emptyAction').textContent='＋ Add first player'}
+  }
+  function openForm(player=null){
+    editing=player;$('#playerForm').reset();clearFieldErrors();$$('#playerForm input, #playerForm select').forEach(el=>el.disabled=false);$('#modalTitle').textContent=player?'Edit player':'Add player';$('#modalSub').textContent=player?'Every field below is saved by your API.':'Create a new PremierZone roster entry.';$('#editNote').style.display=player?'block':'none';
+    if(player){Object.entries(player).forEach(([k,v])=>{const key=k==='Team'?'team':k;const el=$(`#playerForm [name="${key}"]`);if(el)el.value=v??''});$('#playerForm [name=name]').readOnly=true}
+    else{$('#playerForm [name=name]').readOnly=false}
+    $('#playerModal').classList.add('open');setTimeout(()=>$('#playerForm [name=name]').focus(),80)
+  }
+  function closeForm(){$('#playerModal').classList.remove('open');editing=null}
+  $('#playerForm').addEventListener('submit',async e=>{
+    e.preventDefault();clearFieldErrors();const fd=new FormData(e.currentTarget),obj={};for(const [k,v] of fd){obj[k]=numeric.includes(k)?(v===''?null:Number(v)):(typeof v==='string'?v.trim():v)}
+    if(editing)obj.name=editing.name;
+    const btn=$('#saveBtn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Saving';
+    try{await request('',{method:editing?'PUT':'POST',body:JSON.stringify(obj)});closeForm();toast(editing?'Player updated — all fields saved':'Player added');await load()}catch(err){showFieldErrors(err);toast(err.fields?'Check the highlighted fields':(err.message||'Could not save player'),true)}finally{btn.disabled=false;btn.textContent='Save player'}
+  });
+  document.addEventListener('click',e=>{
+    const edit=e.target.closest('[data-edit]'),del=e.target.closest('[data-delete]');
+    if(edit){const p=players.find(x=>x.name===edit.dataset.edit);if(p)openForm(p)}
+    if(del){deleting=del.dataset.delete;$('#deleteCopy').textContent=`Remove ${deleting} from PremierZone? This cannot be undone.`;$('#deleteModal').classList.add('open')}
+  });
+  $('#confirmDelete').onclick=async()=>{if(!deleting)return;const b=$('#confirmDelete');b.disabled=true;b.textContent='Deleting…';try{await request('/'+encodeURIComponent(deleting),{method:'DELETE'});$('#deleteModal').classList.remove('open');toast('Player deleted');await load()}catch(e){toast(e.message||'Could not delete player',true)}finally{b.disabled=false;b.textContent='Delete';deleting=null}};
+  $$('[data-close]').forEach(x=>x.onclick=closeForm);$$('[data-close-delete]').forEach(x=>x.onclick=()=>$('#deleteModal').classList.remove('open'));
+  $('#addBtn').onclick=()=>openForm();$('#refreshBtn').onclick=load;$('#searchInput').oninput=apply;$('#teamFilter').onchange=apply;$('#posFilter').onchange=apply;$('#sortSelect').onchange=apply;
+  $('#emptyAction').onclick=()=>{if(players.length){$('#searchInput').value='';$('#teamFilter').value='';$('#posFilter').value='';apply()}else openForm()};
+  $('#tableView').onclick=()=>{view='table';$('#tableView').classList.add('active');$('#cardView').classList.remove('active');render()};$('#cardView').onclick=()=>{view='card';$('#cardView').classList.add('active');$('#tableView').classList.remove('active');render()};
+  $('#playerForm').addEventListener('input',e=>{if(e.target.classList)e.target.classList.remove('invalid');const slot=e.target.closest?.('.field')?.querySelector('.field-error');if(slot){slot.textContent='';slot.classList.remove('show')}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeForm();$('#deleteModal').classList.remove('open')}if(e.key==='/'&&!/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)){e.preventDefault();$('#searchInput').focus()}if(e.key.toLowerCase()==='n'&&!/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))openForm()});
+  load();
+})();
+</script>
+</body>
+</html>
